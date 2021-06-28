@@ -1,15 +1,24 @@
 //CONFIG
 $fn=50;
 
-wt_material = 5.0; // tloustka plechu [mm]
-a = 150; // delka_hrany [mm]
-d = 30; // prumer diry [mm]
+// tloustka plechu [mm]
+wt_material = 5.0;
+
+// delka_hrany [mm]
+a = 150;
+
+// prumer diry [mm]
+d = 30;
 
 a_pul = 150 / 2;
 pow_a = pow(a, 2);
 pow_a_pul = pow(a_pul, 2);
-h = sqrt(pow_a - pow_a_pul); //vyska
-stred = tan(30) * 75; //stred soumernosti 
+
+//vyska
+h = sqrt(pow_a - pow_a_pul);
+
+//stred soumernosti 
+stred = tan(30) * a_pul;
 //CONFIG_
 
 
@@ -34,15 +43,18 @@ module triangl(hrana)
 module triangl_s_dirou_2d()
     difference()
     { 
-        translate([0, 0]) //posun trianglu
+        //posun trianglu
+        translate([0, 0])
             {
+            //TRIANGL
             triangl(hrana = a);
             }
-    
-            translate([0, +stred]) //posun diry
+            
+            //posun diry
+            translate([0, +stred])
             {
-            #dira(
-            prumer_diry = d);    
+            //DIRA
+            #dira(prumer_diry = d);    
             }
     }
 
