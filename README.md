@@ -21,7 +21,8 @@ open_scad models + various
 - https://mastering-openscad.eu/buch/   @@@   https://mastering-openscad.eu/buch/introduction/   
 - https://hackaday.com/2021/04/17/guide-to-mastering-openscad-costs-roughly-the-same-as-openscad/
 - https://spolearninglab.com/curriculum/lessonPlans/hacking/resources/software/3d/openscad/openscad_loops.html
-- https://eribuijs.blogspot.com/   @@@    https://www.youtube.com/channel/UCPwwPIXHMZYcVyJ2SuRJjuA/videos     @@@      https://homehack.nl/
+- https://eribuijs.blogspot.com/   @@@    https://www.youtube.com/channel/UCPwwPIXHMZYcVyJ2SuRJjuA/videos  
+- https://peertube.linuxrocks.online/accounts/eric_buijs/videos   @@@ https://homehack.nl/
 - http://runeman.org/3d/
 - https://www.linuxexpres.cz/software/openscad-programujte-3d-modely-wysiwym
 - https://www.octopuslab.cz/open-scad/
