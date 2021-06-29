@@ -3,7 +3,7 @@ $fn=50;
 pruhlednost=0.6;
 //pruhlednost=1.0;
 
-vyska = 8;
+vyska = 8; // mm
 
 hloubka_horni = 3;
 
@@ -12,7 +12,7 @@ prumer_horni_vnitrni = 4;
 
 polomer_horni_vnitrni = prumer_horni_vnitrni / 2;
 
-wt_horni = (prumer_horni_vnejsi- prumer_horni_vnitrni) / 2;
+wt_horni = (prumer_horni_vnejsi - prumer_horni_vnitrni) / 2;
 
 prumer_spodni_vnejsi = 9; 
 prumer_spodni_stred = 6; 
