@@ -11,6 +11,7 @@ open_scad models + various
   - https://a360.co/2LvmBTv
 
 - zaslepka
+  - https://www.thingiverse.com/thing:4900306
   - https://a360.co/2U8aH9t
   
 # links
