@@ -304,11 +304,10 @@ module holder_matrix(battery_spec, design_spec, matrix, custom_height = 0, fille
         // Outer box/frame - CENTERED at origin (like rugged box)
         // With optional filleted corners to match box inner shape
         if (fillet_radius > 0) {
-            // Filleted corners using minkowski with cylinder
-            translate([0, 0, fillet_radius])
+            // Filleted corners using minkowski with cylinder (X-Y plane only)
             minkowski() {
                 translate([-(dims[0]-2*fillet_radius)/2, -(dims[1]-2*fillet_radius)/2, 0])
-                cube([dims[0]-2*fillet_radius, dims[1]-2*fillet_radius, actual_height-fillet_radius]);
+                cube([dims[0]-2*fillet_radius, dims[1]-2*fillet_radius, actual_height]);
                 cylinder(r=fillet_radius, h=0.01, $fn=32);
             }
         } else {
