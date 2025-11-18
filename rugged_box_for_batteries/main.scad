@@ -192,12 +192,12 @@ bottom_height = top_height * ratio_bottom_to_top;
 
 // Select hinge state
 
-hinge_state = HINGE_OPEN_WIDE;
+//hinge_state = HINGE_OPEN_WIDE;
 //hinge_state = HINGE_OPEN;
 //hinge_state = HINGE_THREE_QUARTER;
 //hinge_state = HINGE_MID;
 //hinge_state = HINGE_QUARTER;
-//hinge_state = HINGE_CLOSED;
+hinge_state = HINGE_CLOSED;
 
 // Select top part position
 top_part_position = POS_AT_HINGE;
@@ -225,40 +225,6 @@ spacer_custom_height = 5;  // mm
 // Works in all view modes: SHOW_BOX_ONLY, SHOW_BOX_WITH_SPACER, SHOW_SPACER, SHOW_ALL_SEPARATED
 show_batteries = true;
 //show_batteries = false;
-
-//===============================================
-// OPTIONAL FEATURES (Advanced - keep disabled for watertight box)
-//===============================================
-// NOTE: This rugged box is designed to be WATERTIGHT
-// If spacer gets wet: Simply remove spacer, dry with cloth, put back
-// Optional features below compromise watertight seal - use only if needed
-
-// Drainage holes in box bottom (BREAKS watertight seal!)
-// Only enable if you specifically need water drainage
-feature_drainage_holes = FEATURE_DISABLE;
-//feature_drainage_holes = FEATURE_ENABLE;
-drainage_hole_diameter = 4;  // mm
-drainage_hole_count = 4;     // number of holes
-
-// Ventilation holes in box sides (BREAKS watertight seal!)
-// Only enable if devices inside generate significant heat
-feature_ventilation_holes = FEATURE_DISABLE;
-//feature_ventilation_holes = FEATURE_ENABLE;
-ventilation_hole_diameter = 3;  // mm
-ventilation_hole_spacing = 8;   // mm between holes
-
-// Label area on lid (recessed area for sticker or engraved text)
-feature_label_area = FEATURE_DISABLE;
-//feature_label_area = FEATURE_ENABLE;
-label_width = 40;      // mm
-label_height = 20;     // mm
-label_depth = 0.5;     // mm (recess depth)
-
-// Mounting holes in box bottom (for securing to surface)
-feature_mounting_holes = FEATURE_DISABLE;
-//feature_mounting_holes = FEATURE_ENABLE;
-mounting_hole_diameter = 4;   // mm (for M3 or M4 screws)
-mounting_hole_inset = 10;     // mm from corners
 
 //===============================================
 // COLOR CONFIGURATION
@@ -318,103 +284,6 @@ echo(str("Configured battery_top_clearance: ", battery_top_clearance, "mm"));
 echo(str("Gap matches configuration: ", abs((total_height - box_shell) - (spacer_offset_z + bat_total_height(SELECTED_BATTERY)) - battery_top_clearance) < 0.01 ? "YES ✓" : "NO ✗"));
 
 //===============================================
-// OPTIONAL FEATURES MODULES
-//===============================================
-
-// Drainage holes in box bottom
-module drainage_holes() {
-    if (feature_drainage_holes == FEATURE_ENABLE) {
-        hole_spacing_x = box_inner_length / (drainage_hole_count + 1);
-        hole_spacing_y = box_inner_width / (drainage_hole_count + 1);
-
-        for (i = [1 : drainage_hole_count]) {
-            // Holes along length
-            translate([i * hole_spacing_x - box_length/2 + box_fillet + box_shell,
-                       0,
-                       -1])
-            cylinder(d = drainage_hole_diameter, h = box_shell + 2);
-
-            // Holes along width
-            translate([0,
-                       i * hole_spacing_y - box_width/2 + box_fillet + box_shell,
-                       -1])
-            cylinder(d = drainage_hole_diameter, h = box_shell + 2);
-        }
-    }
-}
-
-// Ventilation holes in box sides
-module ventilation_holes() {
-    if (feature_ventilation_holes == FEATURE_ENABLE) {
-        vent_count_length = floor(box_inner_length / ventilation_hole_spacing);
-        vent_count_width = floor(box_inner_width / ventilation_hole_spacing);
-        mid_height = bottom_height / 2;
-
-        // Holes on length sides
-        for (i = [0 : vent_count_length - 1]) {
-            x_pos = i * ventilation_hole_spacing - box_length/2 + box_fillet + box_shell + ventilation_hole_spacing;
-
-            // Front side
-            translate([x_pos, -box_width/2 - 1, mid_height])
-            rotate([90, 0, 0])
-            cylinder(d = ventilation_hole_diameter, h = box_shell + 2);
-
-            // Back side
-            translate([x_pos, box_width/2 + 1, mid_height])
-            rotate([90, 0, 0])
-            cylinder(d = ventilation_hole_diameter, h = box_shell + 2);
-        }
-
-        // Holes on width sides
-        for (i = [0 : vent_count_width - 1]) {
-            y_pos = i * ventilation_hole_spacing - box_width/2 + box_fillet + box_shell + ventilation_hole_spacing;
-
-            // Left side
-            translate([-box_length/2 - 1, y_pos, mid_height])
-            rotate([0, 90, 0])
-            cylinder(d = ventilation_hole_diameter, h = box_shell + 2);
-
-            // Right side
-            translate([box_length/2 + 1, y_pos, mid_height])
-            rotate([0, 90, 0])
-            cylinder(d = ventilation_hole_diameter, h = box_shell + 2);
-        }
-    }
-}
-
-// Label area on lid (recessed)
-module label_area() {
-    if (feature_label_area == FEATURE_ENABLE) {
-        translate([0, 0, top_height - label_depth])
-        linear_extrude(height = label_depth + 1)
-        offset(r = 1)
-        square([label_width, label_height], center = true);
-    }
-}
-
-// Mounting holes in box bottom
-module mounting_holes() {
-    if (feature_mounting_holes == FEATURE_ENABLE) {
-        // Four corners
-        hole_positions = [
-            [-box_length/2 + box_fillet + box_shell + mounting_hole_inset,
-             -box_width/2 + box_fillet + box_shell + mounting_hole_inset],
-            [box_length/2 - box_fillet - box_shell - mounting_hole_inset,
-             -box_width/2 + box_fillet + box_shell + mounting_hole_inset],
-            [-box_length/2 + box_fillet + box_shell + mounting_hole_inset,
-             box_width/2 - box_fillet - box_shell - mounting_hole_inset],
-            [box_length/2 - box_fillet - box_shell - mounting_hole_inset,
-             box_width/2 - box_fillet - box_shell - mounting_hole_inset]
-        ];
-
-        for (pos = hole_positions) {
-            translate([pos[0], pos[1], -1])
-            cylinder(d = mounting_hole_diameter, h = box_shell + 2);
-        }
-    }
-}
-
-//===============================================
 // RENDERING LOGIC
 //===============================================
 
@@ -428,6 +297,52 @@ actual_spacer_height =
     spacer_height_mode == HEIGHT_ALIGN_BOTTOM ? (bottom_height - box_shell - spacer_margin_z) :
     spacer_height_mode == HEIGHT_HALF ? (bat_total_height(SELECTED_BATTERY) / 2) :
     spacer_custom_height;  // HEIGHT_CUSTOM mode
+
+//===============================================
+// BOX ASSEMBLY MODULE (Rust-style composition)
+//===============================================
+// Renders box parts with proper color and transformations
+// Uses children() pattern to avoid repetitive ruggedBox calls
+
+module box_assembly(show_bottom = true, show_top = true) {
+    // Render bottom part
+    if (show_bottom) {
+        set_color(COLOR_BOTTOM_BOOL, COLOR_BOTTOM, COLOR_BOTTOM_TRANSP) {
+            ruggedBox(
+                box_length,
+                box_width,
+                bottom_height,
+                fillet = box_fillet,
+                shell = box_shell,
+                rib = box_rib,
+                top = false,
+                clearance = box_clearance,
+                fillHeight = box_fillHeight,
+                hinge_sphere_lock_protrusion = hinge_sphere_lock
+            );
+        }
+    }
+
+    // Render top part
+    if (show_top) {
+        set_color(COLOR_TOP_BOOL, COLOR_TOP, COLOR_TOP_TRANSP) {
+            top_transform(top_part_position, hinge_state, box_length, box_shell, bottom_height, top_height) {
+                ruggedBox(
+                    box_length,
+                    box_width,
+                    top_height,
+                    fillet = box_fillet,
+                    shell = box_shell,
+                    rib = box_rib,
+                    top = true,
+                    clearance = box_clearance,
+                    fillHeight = box_fillHeight,
+                    hinge_sphere_lock_protrusion = hinge_sphere_lock
+                );
+            }
+        }
+    }
+}
 
 // Separation distance for SHOW_ALL_SEPARATED mode
 separation = 20;
@@ -450,11 +365,6 @@ if (view_mode == SHOW_BOX_ONLY || view_mode == SHOW_BOX_WITH_SPACER || view_mode
                 fillHeight = box_fillHeight,
                 hinge_sphere_lock_protrusion = hinge_sphere_lock
             );
-
-            // Apply optional features
-            drainage_holes();
-            ventilation_holes();
-            mounting_holes();
         }
     } else {
         difference() {
@@ -471,11 +381,6 @@ if (view_mode == SHOW_BOX_ONLY || view_mode == SHOW_BOX_WITH_SPACER || view_mode
                 fillHeight = box_fillHeight,
                 hinge_sphere_lock_protrusion = hinge_sphere_lock
             );
-
-            // Apply optional features
-            drainage_holes();
-            ventilation_holes();
-            mounting_holes();
         }
     }
 
@@ -496,9 +401,6 @@ if (view_mode == SHOW_BOX_ONLY || view_mode == SHOW_BOX_WITH_SPACER || view_mode
                 fillHeight = box_fillHeight,
                 hinge_sphere_lock_protrusion = hinge_sphere_lock
             );
-
-            // Apply optional features
-            label_area();
         }
     } else {
         difference() {
@@ -516,10 +418,6 @@ if (view_mode == SHOW_BOX_ONLY || view_mode == SHOW_BOX_WITH_SPACER || view_mode
                 fillHeight = box_fillHeight,
                 hinge_sphere_lock_protrusion = hinge_sphere_lock
             );
-
-            // Apply optional features (need to apply transform here too)
-            top_transform(top_part_position, hinge_state, box_length, box_shell, bottom_height, top_height)
-            label_area();
         }
     }
 
@@ -532,26 +430,8 @@ if (view_mode == SHOW_BOX_ONLY || view_mode == SHOW_BOX_WITH_SPACER || view_mode
 }
 
 if (view_mode == SHOW_BOX_BOTTOM) {
-    // Only bottom - positioned for STL export
-    difference() {
-        ruggedBox(
-            box_length,
-            box_width,
-            bottom_height,
-            fillet = box_fillet,
-            shell = box_shell,
-            rib = box_rib,
-            top = false,
-            clearance = box_clearance,
-            fillHeight = box_fillHeight,
-            hinge_sphere_lock_protrusion = hinge_sphere_lock
-        );
-
-        // Apply optional features
-        drainage_holes();
-        ventilation_holes();
-        mounting_holes();
-    }
+    // Only bottom - positioned for STL export (using box_assembly)
+    box_assembly(show_bottom = true, show_top = false);
 
     // Show batteries for clearance verification
     if (show_batteries) {
@@ -562,24 +442,8 @@ if (view_mode == SHOW_BOX_BOTTOM) {
 }
 
 if (view_mode == SHOW_BOX_LID) {
-    // Only lid - positioned for STL export
-    difference() {
-        ruggedBox(
-            box_length,
-            box_width,
-            top_height,
-            fillet = box_fillet,
-            shell = box_shell,
-            rib = box_rib,
-            top = true,
-            clearance = box_clearance,
-            fillHeight = box_fillHeight,
-            hinge_sphere_lock_protrusion = hinge_sphere_lock
-        );
-
-        // Apply optional features
-        label_area();
-    }
+    // Only lid - positioned for STL export (using box_assembly)
+    box_assembly(show_bottom = false, show_top = true);
 
     // Show batteries for TOP CLEARANCE verification (CRITICAL!)
     // Position batteries to show gap between pin top and lid inner surface
@@ -614,9 +478,9 @@ if (view_mode == SHOW_SPACER || view_mode == SHOW_BOX_WITH_SPACER || view_mode =
         }
     } else {
         // Positioned inside box bottom - SHOW_BOX_WITH_SPACER mode
-        translate([0, 0, spacer_offset_z]) {
-            set_color(COLOR_SPACER_BOOL, COLOR_SPACER, COLOR_SPACER_TRANSP)
-	      #holder_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, actual_spacer_height, spacer_fillet); // xxx
+         translate([0, 0, spacer_offset_z]) {
+            #set_color(COLOR_SPACER_BOOL, COLOR_SPACER, COLOR_SPACER_TRANSP)
+	      holder_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, actual_spacer_height, spacer_fillet); // xxx
 
             // Show batteries if enabled
             if (show_batteries) {
