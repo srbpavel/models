@@ -282,12 +282,12 @@ COLOR_DUMMY_TRANSP = 1;        // Dummy cubes transparency
 //===============================================
 
 // Select which parts to view
-//view_mode = SHOW_BOX_WITH_SPACER;  // Full assembly: bottom + top + spacer
+view_mode = SHOW_BOX_WITH_SPACER;  // Full assembly: bottom + top + spacer
 //view_mode = SHOW_BOX_ONLY;         // Box only: bottom + top (no spacer)
 //view_mode = SHOW_BOX_BOTTOM;       // STL export: bottom only
 //view_mode = SHOW_BOX_LID;          // STL export: lid only
 //view_mode = SHOW_SPACER;           // STL export: spacer only
-view_mode = SHOW_ALL_SEPARATED;    // All parts separated
+//view_mode = SHOW_ALL_SEPARATED;    // All parts separated
 
 //===============================================
 // INFORMATION OUTPUT
@@ -391,21 +391,13 @@ module dummy_lid_surface() {
         inner_length = box_length - 2 * box_shell;
         inner_width = box_width - 2 * box_shell;
 
-        // In SHOW_SPACER mode, show dummy at closed lid position (bottom_height)
-        // In other modes with lid visible, follow lid transformation
+        // Dummy lid ALWAYS follows actual lid position/rotation via top_transform
+        // Works in all view modes - lid rotates with hinge state
         color(COLOR_DUMMY, COLOR_DUMMY_TRANSP) {
-            if (view_mode == SHOW_SPACER) {
-                // Position at battery tops + clearance (at REAL position including spacer offset)
-                translate([0, 0, spacer_offset_z + bat_total_height(SELECTED_BATTERY) + battery_top_clearance]) {
+            top_transform(top_part_position, hinge_state, box_length, box_shell, bottom_height, top_height) {
+                // Position at lid's inner surface (box_shell in lid's local coords)
+                translate([0, 0, box_shell]) {
                     cube([inner_length, inner_width, dummy_lid_thickness], center = true);
-                }
-            } else {
-                // Follow lid transformation
-                top_transform(top_part_position, hinge_state, box_length, box_shell, bottom_height, top_height) {
-                    // Position at lid's inner surface (bottom of lid in its local coords)
-                    translate([0, 0, box_shell]) {
-                        cube([inner_length, inner_width, dummy_lid_thickness], center = true);
-                    }
                 }
             }
         }
