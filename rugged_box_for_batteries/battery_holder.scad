@@ -202,14 +202,20 @@ function calc_holder_dimensions(battery_spec, design_spec, matrix) = [
 //===============================================
 
 // Single battery visualization
-module battery(spec) {
+// use_custom_color: false = use battery spec color, true = use custom_color
+// custom_color: color name (only used if use_custom_color=true)
+// alpha: transparency (0.0=solid, 1.0=invisible)
+module battery(spec, use_custom_color = false, custom_color = "red", alpha = 0.7) {
     body_d = bat_body_diameter(spec);
     body_h = bat_body_height(spec);
     pin_d = bat_top_pin_diameter(spec);
     pin_h = bat_top_pin_height(spec);
     has_button = bat_has_button_top(spec);
 
-    color(bat_color(spec), alpha=0.7) {
+    // Use custom color or battery spec color
+    actual_color = use_custom_color ? custom_color : bat_color(spec);
+
+    color(actual_color, alpha=alpha) {
         cylinder(d = body_d, h = body_h);
 
         if (has_button == 1 && pin_h > 0) {
@@ -221,18 +227,21 @@ module battery(spec) {
 
 // Battery matrix visualization
 // Batteries sit at z=0 (spacer bottom level = box bottom)
-module battery_matrix(battery_spec, design_spec, matrix) {
+// Matrix is CENTERED at origin to match centered spacer
+// Color parameters: use_custom_color, custom_color, alpha (passed to battery module)
+module battery_matrix(battery_spec, design_spec, matrix, use_custom_color = false, custom_color = "red", alpha = 0.7) {
+    dims = calc_holder_dimensions(battery_spec, design_spec, matrix);
     spacing = calc_battery_spacing(battery_spec, design_spec);
     outer_wall = design_outer_wall_thickness(design_spec);
 
     for (x = [0 : matrix[0] - 1]) {
         for (y = [0 : matrix[1] - 1]) {
             translate([
-                outer_wall + x * spacing + spacing / 2,
-                outer_wall + y * spacing + spacing / 2,
+                -dims[0]/2 + outer_wall + x * spacing + spacing / 2,
+                -dims[1]/2 + outer_wall + y * spacing + spacing / 2,
                 0  // Batteries sit at spacer bottom = box bottom
             ])
-            battery(battery_spec);
+            battery(battery_spec, use_custom_color, custom_color, alpha);
         }
     }
 }
@@ -291,7 +300,8 @@ module holder_matrix(battery_spec, design_spec, matrix, custom_height = 0) {
     bat_d = bat_max_diameter(battery_spec);
 
     difference() {
-        // Outer box/frame
+        // Outer box/frame - CENTERED at origin (like rugged box)
+        translate([-dims[0]/2, -dims[1]/2, 0])
         cube([dims[0], dims[1], actual_height]);
 
         // UNION all battery through-holes together
@@ -299,8 +309,8 @@ module holder_matrix(battery_spec, design_spec, matrix, custom_height = 0) {
             for (x = [0 : matrix[0] - 1]) {
                 for (y = [0 : matrix[1] - 1]) {
                     translate([
-                        outer_wall + x * spacing + spacing / 2,
-                        outer_wall + y * spacing + spacing / 2,
+                        -dims[0]/2 + outer_wall + x * spacing + spacing / 2,
+                        -dims[1]/2 + outer_wall + y * spacing + spacing / 2,
                         -1  // Start below bottom, go through top
                     ])
                     // Through-hole cylinder (goes all the way through)
