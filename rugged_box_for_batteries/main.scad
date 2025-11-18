@@ -207,12 +207,12 @@ bottom_height = top_height * ratio_bottom_to_top;
 
 // Select hinge state
 
-//hinge_state = HINGE_OPEN_WIDE;
+hinge_state = HINGE_OPEN_WIDE;
 //hinge_state = HINGE_OPEN;
 //hinge_state = HINGE_THREE_QUARTER;
 //hinge_state = HINGE_MID;
 //hinge_state = HINGE_QUARTER;
-hinge_state = HINGE_CLOSED;
+//hinge_state = HINGE_CLOSED;
 
 // Select top part position
 top_part_position = POS_AT_HINGE;
@@ -286,8 +286,8 @@ COLOR_DUMMY_TRANSP = 1;        // Dummy cubes transparency
 //view_mode = SHOW_BOX_ONLY;         // Box only: bottom + top (no spacer)
 //view_mode = SHOW_BOX_BOTTOM;       // STL export: bottom only
 //view_mode = SHOW_BOX_LID;          // STL export: lid only
-view_mode = SHOW_SPACER;           // STL export: spacer only
-//view_mode = SHOW_ALL_SEPARATED;    // All parts separated
+//view_mode = SHOW_SPACER;           // STL export: spacer only
+view_mode = SHOW_ALL_SEPARATED;    // All parts separated
 
 //===============================================
 // INFORMATION OUTPUT
@@ -395,8 +395,8 @@ module dummy_lid_surface() {
         // In other modes with lid visible, follow lid transformation
         color(COLOR_DUMMY, COLOR_DUMMY_TRANSP) {
             if (view_mode == SHOW_SPACER) {
-                // Position at battery tops + clearance (where lid inner surface would be)
-                translate([0, 0, bat_total_height(SELECTED_BATTERY) + battery_top_clearance]) {
+                // Position at battery tops + clearance (at REAL position including spacer offset)
+                translate([0, 0, spacer_offset_z + bat_total_height(SELECTED_BATTERY) + battery_top_clearance]) {
                     cube([inner_length, inner_width, dummy_lid_thickness], center = true);
                 }
             } else {
