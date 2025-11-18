@@ -191,7 +191,8 @@ box_length = box_inner_length + 2 * box_shell;
 box_width = box_inner_width + 2 * box_shell;
 
 // Total box height - calculated from BATTERY height + clearances
-total_height = box_shell * 2 + spacer_margin_z + bat_total_height(SELECTED_BATTERY) + battery_top_clearance;
+// Include spacer_fillet offset (holder_matrix internally offsets by fillet_radius)
+total_height = box_shell * 2 + spacer_margin_z + (spacer_fillet > 0 ? spacer_fillet : 0) + bat_total_height(SELECTED_BATTERY) + battery_top_clearance;
 
 // Parts ratio (bottom:top)
 ratio_bottom_to_top = 3;  // 3 means bottom is 3x taller than top
@@ -206,12 +207,12 @@ bottom_height = top_height * ratio_bottom_to_top;
 
 // Select hinge state
 
-//hinge_state = HINGE_OPEN_WIDE;
+hinge_state = HINGE_OPEN_WIDE;
 //hinge_state = HINGE_OPEN;
 //hinge_state = HINGE_THREE_QUARTER;
 //hinge_state = HINGE_MID;
 //hinge_state = HINGE_QUARTER;
-hinge_state = HINGE_CLOSED;
+//hinge_state = HINGE_CLOSED;
 
 // Select top part position
 top_part_position = POS_AT_HINGE;
@@ -245,7 +246,7 @@ show_dummy_objects = true;
 //show_dummy_objects = false;
 
 // Lid surface dummy thickness (thin surface visualization)
-dummy_lid_thickness = 0.2;         // mm
+dummy_lid_thickness = 0.01;         // mm (smallest possible)
 
 //===============================================
 // COLOR CONFIGURATION
@@ -281,12 +282,12 @@ COLOR_DUMMY_TRANSP = 1;        // Dummy cubes transparency
 //===============================================
 
 // Select which parts to view
-view_mode = SHOW_BOX_WITH_SPACER;
-//view_mode = SHOW_BOX_ONLY;
-//view_mode = SHOW_BOX_BOTTOM;      // Use this for STL export
-//view_mode = SHOW_BOX_LID;         // Use this for STL export
-//view_mode = SHOW_SPACER;          // Use this for STL export
-//view_mode = SHOW_ALL_SEPARATED;
+//view_mode = SHOW_BOX_WITH_SPACER;  // Full assembly: bottom + top + spacer
+//view_mode = SHOW_BOX_ONLY;         // Box only: bottom + top (no spacer)
+//view_mode = SHOW_BOX_BOTTOM;       // STL export: bottom only
+//view_mode = SHOW_BOX_LID;          // STL export: lid only
+//view_mode = SHOW_SPACER;           // STL export: spacer only
+view_mode = SHOW_ALL_SEPARATED;    // All parts separated
 
 //===============================================
 // INFORMATION OUTPUT
@@ -299,15 +300,6 @@ echo(str("Holder dimensions: ", holder_dims[0], " x ", holder_dims[1], " x ", ho
 echo(str("Box outer dimensions: ", box_length, " x ", box_width, " x ", total_height, "mm"));
 echo(str("Box inner dimensions: ", box_inner_length, " x ", box_inner_width, "mm"));
 echo(str("Bottom height: ", bottom_height, "mm, Top height: ", top_height, "mm"));
-echo("");
-echo("=== CRITICAL GAP VERIFICATION ===");
-echo(str("Battery total height: ", bat_total_height(SELECTED_BATTERY), "mm"));
-echo(str("Battery bottom position: ", spacer_offset_z, "mm (box_shell + spacer_margin_z)"));
-echo(str("Battery top position: ", spacer_offset_z + bat_total_height(SELECTED_BATTERY), "mm"));
-echo(str("Box inner top: ", total_height - box_shell, "mm (total_height - box_shell)"));
-echo(str("Actual gap: ", (total_height - box_shell) - (spacer_offset_z + bat_total_height(SELECTED_BATTERY)), "mm"));
-echo(str("Configured battery_top_clearance: ", battery_top_clearance, "mm"));
-echo(str("Gap matches configuration: ", abs((total_height - box_shell) - (spacer_offset_z + bat_total_height(SELECTED_BATTERY)) - battery_top_clearance) < 0.01 ? "YES ✓" : "NO ✗"));
 
 //===============================================
 // RENDERING LOGIC
@@ -316,6 +308,20 @@ echo(str("Gap matches configuration: ", abs((total_height - box_shell) - (spacer
 // Calculate spacer position inside box
 // Spacer is now CENTERED at origin (like box), only need Z offset
 spacer_offset_z = box_shell + spacer_margin_z;
+
+// Calculate actual battery position accounting for fillet
+battery_base_z = spacer_offset_z + (spacer_fillet > 0 ? spacer_fillet : 0);
+
+echo("");
+echo("=== CRITICAL GAP VERIFICATION ===");
+echo(str("Battery total height: ", bat_total_height(SELECTED_BATTERY), "mm"));
+echo(str("Spacer bottom position: ", spacer_offset_z, "mm (box_shell + spacer_margin_z)"));
+echo(str("Battery bottom position: ", battery_base_z, "mm (spacer + fillet)"));
+echo(str("Battery top position: ", battery_base_z + bat_total_height(SELECTED_BATTERY), "mm"));
+echo(str("Box inner top: ", total_height - box_shell, "mm (total_height - box_shell)"));
+echo(str("Actual gap: ", (total_height - box_shell) - (battery_base_z + bat_total_height(SELECTED_BATTERY)), "mm"));
+echo(str("Configured battery_top_clearance: ", battery_top_clearance, "mm"));
+echo(str("Gap matches configuration: ", abs((total_height - box_shell) - (battery_base_z + bat_total_height(SELECTED_BATTERY)) - battery_top_clearance) < 0.01 ? "YES ✓" : "NO ✗"));
 
 // Calculate actual spacer print height based on mode
 actual_spacer_height =
@@ -378,19 +384,28 @@ module box_assembly(show_bottom = true, show_top = true) {
 // 2. Battery gaps - shows clearance around each battery
 // 3. Spacer gap - shows clearance between spacer and wall
 
-// 1. Lid inner surface dummy (follows lid transformation)
+// 1. Lid inner surface dummy (shows where lid would be when closed)
 module dummy_lid_surface() {
     if (show_dummy_objects) {
         // Calculate inner dimensions (box inner space without shell)
         inner_length = box_length - 2 * box_shell;
         inner_width = box_width - 2 * box_shell;
 
-        // Dummy copies the lid - follows its transformation
+        // In SHOW_SPACER mode, show dummy at closed lid position (bottom_height)
+        // In other modes with lid visible, follow lid transformation
         color(COLOR_DUMMY, COLOR_DUMMY_TRANSP) {
-            top_transform(top_part_position, hinge_state, box_length, box_shell, bottom_height, top_height) {
-                // Position at lid's inner surface (bottom of lid in its local coords)
-                translate([0, 0, box_shell]) {
+            if (view_mode == SHOW_SPACER) {
+                // Fixed position at closed lid height (bottom of lid when closed)
+                translate([0, 0, bottom_height - box_shell]) {
                     cube([inner_length, inner_width, dummy_lid_thickness], center = true);
+                }
+            } else {
+                // Follow lid transformation
+                top_transform(top_part_position, hinge_state, box_length, box_shell, bottom_height, top_height) {
+                    // Position at lid's inner surface (bottom of lid in its local coords)
+                    translate([0, 0, box_shell]) {
+                        cube([inner_length, inner_width, dummy_lid_thickness], center = true);
+                    }
                 }
             }
         }
@@ -412,9 +427,10 @@ module dummy_battery_gaps() {
         // Cube positioned IN the gap (battery edge + half clearance)
         gap_x = battery_x + bat_r + clearance / 2;
 
-        // Position cube on X-axis (Y=0), ABOVE spacer top surface
+        // Position cube on X-axis (Y=0), with TOP edge at spacer top
+        // Cube top aligns with spacer top edge
         // Cube size = actual radial gap (clearance)
-        translate([gap_x, 0, spacer_offset_z + actual_spacer_height + clearance/2]) {
+        translate([gap_x, 0, actual_spacer_height - clearance/2]) {
             color(COLOR_DUMMY, COLOR_DUMMY_TRANSP) {
                 cube([clearance, clearance, clearance], center = true);
             }
@@ -432,8 +448,10 @@ module dummy_spacer_gap() {
         spacer_edge_x = holder_dims[0] / 2;
         gap_center_x = spacer_edge_x + spacer_margin_xy / 2;
 
+        // Position cube with TOP edge at spacer top
+        // Cube top aligns with spacer top edge
         // Cube size = actual spacer margin
-        translate([gap_center_x, 0, spacer_offset_z + actual_spacer_height + spacer_margin_xy/2]) {
+        translate([gap_center_x, 0, actual_spacer_height - spacer_margin_xy/2]) {
             color(COLOR_DUMMY, COLOR_DUMMY_TRANSP) {
                 cube([spacer_margin_xy, spacer_margin_xy, spacer_margin_xy], center = true);
             }
@@ -453,7 +471,7 @@ module dummy_battery_top_gap() {
 
         // Cube ON battery top, on X-axis, showing gap to lid
         // Cube size = battery_top_clearance
-        translate([battery_x, 0, spacer_offset_z + bat_total_height(SELECTED_BATTERY) + battery_top_clearance/2]) {
+        translate([battery_x, 0, bat_total_height(SELECTED_BATTERY) + battery_top_clearance/2]) {
             color(COLOR_DUMMY, COLOR_DUMMY_TRANSP) {
                 cube([battery_top_clearance, battery_top_clearance, battery_top_clearance], center = true);
             }
@@ -485,20 +503,19 @@ if (view_mode == SHOW_BOX_ONLY || view_mode == SHOW_BOX_WITH_SPACER || view_mode
         }
     } else {
         difference() {
-            set_color(COLOR_BOTTOM_BOOL, COLOR_BOTTOM, COLOR_BOTTOM_TRANSP) {
-                #ruggedBox( // xxx
-                    box_length,
-                    box_width,
-                    bottom_height,
-                    fillet = box_fillet,
-                    shell = box_shell,
-                    rib = box_rib,
-                    top = false,
-                    clearance = box_clearance,
-                    fillHeight = box_fillHeight,
-                    hinge_sphere_lock_protrusion = hinge_sphere_lock
-                );
-            }
+            set_color(COLOR_BOTTOM_BOOL, COLOR_BOTTOM, COLOR_BOTTOM_TRANSP)
+            #ruggedBox(
+                box_length,
+                box_width,
+                bottom_height,
+                fillet = box_fillet,
+                shell = box_shell,
+                rib = box_rib,
+                top = false,
+                clearance = box_clearance,
+                fillHeight = box_fillHeight,
+                hinge_sphere_lock_protrusion = hinge_sphere_lock
+            );
         }
     }
 
@@ -522,22 +539,20 @@ if (view_mode == SHOW_BOX_ONLY || view_mode == SHOW_BOX_WITH_SPACER || view_mode
         }
     } else {
         difference() {
-            set_color(COLOR_TOP_BOOL, COLOR_TOP, COLOR_TOP_TRANSP) {
-                top_transform(top_part_position, hinge_state, box_length, box_shell, bottom_height, top_height) {
-                    #ruggedBox( // xxx
-                        box_length,
-                        box_width,
-                        top_height,
-                        fillet = box_fillet,
-                        shell = box_shell,
-                        rib = box_rib,
-                        top = true,
-                        clearance = box_clearance,
-                        fillHeight = box_fillHeight,
-                        hinge_sphere_lock_protrusion = hinge_sphere_lock
-                    );
-                }
-            }
+            set_color(COLOR_TOP_BOOL, COLOR_TOP, COLOR_TOP_TRANSP)
+            top_transform(top_part_position, hinge_state, box_length, box_shell, bottom_height, top_height)
+	      #ruggedBox( // xxx
+                box_length,
+                box_width,
+                top_height,
+                fillet = box_fillet,
+                shell = box_shell,
+                rib = box_rib,
+                top = true,
+                clearance = box_clearance,
+                fillHeight = box_fillHeight,
+                hinge_sphere_lock_protrusion = hinge_sphere_lock
+            );
         }
     }
 
@@ -547,19 +562,24 @@ if (view_mode == SHOW_BOX_ONLY || view_mode == SHOW_BOX_WITH_SPACER || view_mode
             battery_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, COLOR_BATTERY_BOOL, COLOR_BATTERY, COLOR_BATTERY_TRANSP);
         }
     }
-
-    // Show dummy measurement objects (gap visualization helpers)
-    if (view_mode == SHOW_BOX_ONLY || view_mode == SHOW_BOX_WITH_SPACER) {
-        dummy_lid_surface();      // Lid inner surface
-        dummy_battery_gaps();     // Battery-to-spacer hole gaps
-        dummy_spacer_gap();       // Spacer-to-wall gap
-        dummy_battery_top_gap();  // Battery-to-lid gap
-    }
 }
 
 if (view_mode == SHOW_BOX_BOTTOM) {
-    // Only bottom - positioned for STL export (using box_assembly)
-    box_assembly(show_bottom = true, show_top = false);
+    // Only bottom - positioned for STL export
+    difference() {
+        ruggedBox(
+            box_length,
+            box_width,
+            bottom_height,
+            fillet = box_fillet,
+            shell = box_shell,
+            rib = box_rib,
+            top = false,
+            clearance = box_clearance,
+            fillHeight = box_fillHeight,
+            hinge_sphere_lock_protrusion = hinge_sphere_lock
+        );
+    }
 
     // Show batteries for clearance verification
     if (show_batteries) {
@@ -570,8 +590,21 @@ if (view_mode == SHOW_BOX_BOTTOM) {
 }
 
 if (view_mode == SHOW_BOX_LID) {
-    // Only lid - positioned for STL export (using box_assembly)
-    box_assembly(show_bottom = false, show_top = true);
+    // Only lid - positioned for STL export
+    difference() {
+        ruggedBox(
+            box_length,
+            box_width,
+            top_height,
+            fillet = box_fillet,
+            shell = box_shell,
+            rib = box_rib,
+            top = true,
+            clearance = box_clearance,
+            fillHeight = box_fillHeight,
+            hinge_sphere_lock_protrusion = hinge_sphere_lock
+        );
+    }
 
     // Show batteries for TOP CLEARANCE verification (CRITICAL!)
     // Position batteries to show gap between pin top and lid inner surface
@@ -606,17 +639,27 @@ if (view_mode == SHOW_SPACER || view_mode == SHOW_BOX_WITH_SPACER || view_mode =
         }
     } else {
         // Positioned inside box bottom - SHOW_BOX_WITH_SPACER mode
-         translate([0, 0, spacer_offset_z]) {
-            #set_color(COLOR_SPACER_BOOL, COLOR_SPACER, COLOR_SPACER_TRANSP) { // yyy
-                holder_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, actual_spacer_height, spacer_fillet); // xxx
-            }
+        translate([0, 0, spacer_offset_z]) {
+	  #set_color(COLOR_SPACER_BOOL, COLOR_SPACER, COLOR_SPACER_TRANSP) // xxx
+            holder_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, actual_spacer_height, spacer_fillet);
 
             // Show batteries if enabled
             if (show_batteries) {
-                battery_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, COLOR_BATTERY_BOOL, COLOR_BATTERY, COLOR_BATTERY_TRANSP); // yyy
+	      battery_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, COLOR_BATTERY_BOOL, COLOR_BATTERY, COLOR_BATTERY_TRANSP); // yyy
             }
         }
     }
+}
+
+// DUMMY MEASUREMENT OBJECTS
+if (show_dummy_objects) {
+    translate([0, 0, spacer_offset_z]) {
+        dummy_battery_gaps();
+        dummy_spacer_gap();
+        dummy_battery_top_gap();
+    }
+
+    dummy_lid_surface();
 }
 
 //===============================================
