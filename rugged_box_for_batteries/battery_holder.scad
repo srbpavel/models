@@ -220,17 +220,17 @@ module battery(spec) {
 }
 
 // Battery matrix visualization
+// Batteries sit at z=0 (spacer bottom level = box bottom)
 module battery_matrix(battery_spec, design_spec, matrix) {
     spacing = calc_battery_spacing(battery_spec, design_spec);
     outer_wall = design_outer_wall_thickness(design_spec);
-    bottom = design_bottom_thickness(design_spec);
 
     for (x = [0 : matrix[0] - 1]) {
         for (y = [0 : matrix[1] - 1]) {
             translate([
                 outer_wall + x * spacing + spacing / 2,
                 outer_wall + y * spacing + spacing / 2,
-                bottom
+                0  // Batteries sit at spacer bottom = box bottom
             ])
             battery(battery_spec);
         }
