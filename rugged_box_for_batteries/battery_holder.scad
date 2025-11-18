@@ -287,7 +287,8 @@ module single_cell_holder(battery_spec, design_spec) {
 
 // Matrix holder with through-holes (spacer/organizer)
 // custom_height: 0 = use calculated height, >0 = use custom height (for test prints)
-module holder_matrix(battery_spec, design_spec, matrix, custom_height = 0) {
+// fillet_radius: 0 = square corners, >0 = rounded corners (matches box inner shape)
+module holder_matrix(battery_spec, design_spec, matrix, custom_height = 0, fillet_radius = 0) {
     dims = calc_holder_dimensions(battery_spec, design_spec, matrix);
     spacing = calc_battery_spacing(battery_spec, design_spec);
     outer_wall = design_outer_wall_thickness(design_spec);
@@ -301,8 +302,20 @@ module holder_matrix(battery_spec, design_spec, matrix, custom_height = 0) {
 
     difference() {
         // Outer box/frame - CENTERED at origin (like rugged box)
-        translate([-dims[0]/2, -dims[1]/2, 0])
-        cube([dims[0], dims[1], actual_height]);
+        // With optional filleted corners to match box inner shape
+        if (fillet_radius > 0) {
+            // Filleted corners using minkowski with cylinder
+            translate([0, 0, fillet_radius])
+            minkowski() {
+                translate([-(dims[0]-2*fillet_radius)/2, -(dims[1]-2*fillet_radius)/2, 0])
+                cube([dims[0]-2*fillet_radius, dims[1]-2*fillet_radius, actual_height-fillet_radius]);
+                cylinder(r=fillet_radius, h=0.01, $fn=32);
+            }
+        } else {
+            // Square corners (original)
+            translate([-dims[0]/2, -dims[1]/2, 0])
+            cube([dims[0], dims[1], actual_height]);
+        }
 
         // UNION all battery through-holes together
         union() {

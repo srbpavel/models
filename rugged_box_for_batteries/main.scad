@@ -135,8 +135,14 @@ SELECTED_DESIGN = DESIGN_COMPACT;
 holder_dims = calc_holder_dimensions(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX);
 
 // Margin around spacer inside box (mm)
-spacer_margin_xy = 2.0;  // horizontal clearance (spacer removable)
+spacer_margin_xy = 0.5;  // horizontal clearance (tight fit, easily removable)
+//spacer_margin_xy = 1.0;  // moderate clearance
+//spacer_margin_xy = 2.0;  // loose fit (original - too much gap!)
 spacer_margin_z = 1.0;   // vertical clearance bottom (spacer sits here)
+
+// Spacer fillet radius (rounded corners to match box inner shape)
+spacer_fillet = 3.5;     // slightly less than box_fillet for clearance
+//spacer_fillet = 0;     // square corners (no fillet)
 
 //===============================================
 // ️ CRITICAL PARAMETER: AIR GAP CONTROL ️
@@ -207,8 +213,8 @@ hinge_sphere_lock = HINGE_LOCK_NONE;
 //===============================================
 
 // Spacer height mode selection
-spacer_height_mode = HEIGHT_FULL_BATTERY;
-//spacer_height_mode = HEIGHT_ALIGN_BOTTOM;  // Flush with bottom part (TOO SHORT! Batteries stick out!)
+//spacer_height_mode = HEIGHT_FULL_BATTERY;
+spacer_height_mode = HEIGHT_ALIGN_BOTTOM;  // Flush with bottom part (TOO SHORT! Batteries stick out!)
 //spacer_height_mode = HEIGHT_HALF;          // Quick test at 1/2 height
 //spacer_height_mode = HEIGHT_CUSTOM;        // Custom test height
 
@@ -260,23 +266,23 @@ mounting_hole_inset = 10;     // mm from corners
 
 //COLOR_TOP_BOOL = false;
 COLOR_TOP_BOOL = true;
-COLOR_TOP_TRANSP = 0.3;
+COLOR_TOP_TRANSP = 0.3;          // VERY transparent to see through when closed!
 COLOR_TOP = "magenta";
 
 //COLOR_BOTTOM_BOOL = false;
 COLOR_BOTTOM_BOOL = true;
-COLOR_BOTTOM_TRANSP = 0.3;
+COLOR_BOTTOM_TRANSP = 0.3;       // VERY transparent to see inside
 COLOR_BOTTOM = "lime";
 
 //COLOR_SPACER_BOOL = false;
 COLOR_SPACER_BOOL = true;
-COLOR_SPACER_TRANSP = 0.5;
+COLOR_SPACER_TRANSP = 0.7;       // VERY transparent to see batteries through it!
 COLOR_SPACER = "cyan";
 
 //COLOR_BATTERY_BOOL = false;      // false = use battery spec color
-COLOR_BATTERY_BOOL = true;     // true = use custom color below
-COLOR_BATTERY_TRANSP = 0.7;      // transparency (0.0=solid, 1.0=invisible)
-COLOR_BATTERY = "red";           // custom color (when BOOL=true)
+COLOR_BATTERY_BOOL = true;       // true = use custom color below
+COLOR_BATTERY_TRANSP = 0.5;      // SOLID (0.0) - batteries must be CLEARLY visible!
+COLOR_BATTERY = "red";           // bright color for visibility
 
 //===============================================
 // VIEW MODE SELECTION
@@ -453,7 +459,7 @@ if (view_mode == SHOW_BOX_ONLY || view_mode == SHOW_BOX_WITH_SPACER || view_mode
     } else {
         difference() {
             set_color(COLOR_BOTTOM_BOOL, COLOR_BOTTOM, COLOR_BOTTOM_TRANSP)
-            ruggedBox(
+	    #ruggedBox( // xxx
                 box_length,
                 box_width,
                 bottom_height,
@@ -498,7 +504,7 @@ if (view_mode == SHOW_BOX_ONLY || view_mode == SHOW_BOX_WITH_SPACER || view_mode
         difference() {
             set_color(COLOR_TOP_BOOL, COLOR_TOP, COLOR_TOP_TRANSP)
             top_transform(top_part_position, hinge_state, box_length, box_shell, bottom_height, top_height)
-            ruggedBox(
+	      #ruggedBox( // xxx
                 box_length,
                 box_width,
                 top_height,
@@ -591,7 +597,7 @@ if (view_mode == SHOW_SPACER || view_mode == SHOW_BOX_WITH_SPACER || view_mode =
         // Show spacer in separated layout
         translate([box_length + separation, 0, 0]) {
             set_color(COLOR_SPACER_BOOL, COLOR_SPACER, COLOR_SPACER_TRANSP)
-            holder_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, actual_spacer_height);
+            holder_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, actual_spacer_height, spacer_fillet);
 
             // Show batteries if enabled
             if (show_batteries) {
@@ -600,7 +606,7 @@ if (view_mode == SHOW_SPACER || view_mode == SHOW_BOX_WITH_SPACER || view_mode =
         }
     } else if (view_mode == SHOW_SPACER) {
         // Positioned for STL export
-        holder_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, actual_spacer_height);
+        holder_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, actual_spacer_height, spacer_fillet);
 
         // Show batteries if enabled (for size reference)
         if (show_batteries) {
@@ -610,11 +616,11 @@ if (view_mode == SHOW_SPACER || view_mode == SHOW_BOX_WITH_SPACER || view_mode =
         // Positioned inside box bottom - SHOW_BOX_WITH_SPACER mode
         translate([0, 0, spacer_offset_z]) {
             set_color(COLOR_SPACER_BOOL, COLOR_SPACER, COLOR_SPACER_TRANSP)
-            holder_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, actual_spacer_height);
+	      #holder_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, actual_spacer_height, spacer_fillet); // xxx
 
             // Show batteries if enabled
             if (show_batteries) {
-                battery_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, COLOR_BATTERY_BOOL, COLOR_BATTERY, COLOR_BATTERY_TRANSP);
+	      battery_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, COLOR_BATTERY_BOOL, COLOR_BATTERY, COLOR_BATTERY_TRANSP); // yyy
             }
         }
     }
