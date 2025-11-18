@@ -1,0 +1,174 @@
+Project Overview: Rugged Box for Batteries (OpenSCAD)
+
+  Based on my study of the documentation and original files, here's what I found:
+
+  Working Directory
+
+  /home/conan/git/models/rugged_box_for_batteries
+
+  Original Files (in original/ subdirectory)
+
+  1. 18650_enum_like_version_003_matrix.scad (422 lines)
+    - Battery holder/spacer with matrix generation
+    - Enum-like data structures for batteries, manufacturing specs, and design presets
+    - Function-based accessors (Rust-style)
+    - Supports multiple battery types (RED, GREEN, FENIX variants)
+    - Matrix-based layout (e.g., 3x5 = 15 cells)
+    - Through-hole spacer design
+  2. paaavel_rugged_box_enum_like.scad (487 lines)
+    - Rugged box with hinged lid and snap lock
+    - Enum-like constants for views, positions, hinge states
+    - Configurable dimensions and rendering options
+    - Complex hinge mechanism with sphere locks
+    - Rabbet joints for tight fit
+
+  Project Goals
+
+  Create a modular system in /home/conan/git/models/rugged_box_for_batteries/:
+
+  Planned Structure:
+  - main.scad - Main configuration file where users can:
+    - Choose battery type
+    - Define battery matrix (count/layout)
+    - Select box part to view (bottom/lid/spacer/all)
+    - Configure hinge open angle
+    - Set all parameters
+    - Export specific parts as STL
+  - battery_holder.scad - Library extracted from battery spacer logic
+  - rugged_box.scad - Library extracted from rugged box logic
+
+  Design Philosophy
+
+  - Rust-style enums for type safety (no magic strings/numbers)
+  - Function-based accessors instead of array indices
+  - Minimal error surface through structured configuration
+  - Modular libraries with clear separation of concerns
+
+  Key Features from Original Code
+
+  Battery Holder:
+  - Spec structures: BATTERY_SPEC, MFG_SPEC, DESIGN_SPEC
+  - Presets: COMPACT, ROBUST, TIGHT designs
+  - Calculations: spacing, dimensions, clearances
+  - Through-hole spacer for organization
+
+  Rugged Box:
+  - Hinged lid with configurable open angles (0°, -22.5°, -45°, -67.5°, -90°)
+  - Snap lock mechanism
+  - Filleted edges with minkowski operations
+  - Ribs for strength
+  - Configurable shell thickness, rib size, clearances
+
+  Available Resources
+
+  - Local OpenSCAD docs in /home/conan/git/sources/3d/
+  - MCP Context7 server for library documentation
+  - Multiple tutorial links in README.md
+
+  Ready to proceed with creating the modular library structure?
+
+
+● All Issues Fixed! ✓
+
+  Changes Made:
+
+  1. ✓ Spacer Centering Fixed
+  - Issue: Spacer offset calculation didn't account for box being centered at origin
+  - Fix: Changed from (box_length - holder_dims[0]) / 2 to -holder_dims[0] / 2
+  - Result: Spacer now properly centered in box
+
+  2. ✓ Spacer Placement Simplified
+  - Issue: Complex multi-mode system (top/bottom/separate) - nonsense for open lid
+  - Fix: Removed all placement modes
+  - New approach:
+    - Spacer always in bottom part (removable)
+    - Single parameter: spacer_height_offset to adjust vertical position
+    - Clean, logical design
+
+  3. ✓ Optional Features Properly Documented
+  - Issue: Features added without asking (violated BASIC_RULES.md)
+  - Fix: Clear documentation that these BREAK watertight seal
+  - Philosophy:
+    - Box designed to be WATERTIGHT
+    - If spacer gets wet: Remove → Dry with cloth → Replace
+    - Optional features disabled by default
+    - Enable only if specifically needed
+
+  4. ✓ Battery Visualization Added
+  - New parameter: show_batteries = true/false
+  - Shows: Actual batteries inside spacer (visualization only)
+  - Purpose: See fit and clearances before printing
+
+  Current Configuration:
+
+  SELECTED_BATTERY = BATTERY_FENIX_USB_C;
+  MATRIX = [3, 5];  // 15 batteries
+  show_batteries = true;  // See batteries in spacer
+  spacer_height_offset = 0;  // Sits on box bottom
+
+  // Optional features - DISABLED (maintain watertight seal)
+  feature_drainage_holes = FEATURE_DISABLE;
+  feature_ventilation_holes = FEATURE_DISABLE;
+  feature_label_area = FEATURE_DISABLE;
+  feature_mounting_holes = FEATURE_DISABLE;
+
+  Test Results:
+
+  Battery: usb_c
+  Matrix: 3 x 5 = 15 cells
+  Holder dimensions: 64 x 104.8 x 77.2mm
+  Box outer dimensions: 82 x 122.8 x 85.2mm
+  Spacer clearance: 2mm (X/Y), 1mm (Z) ✓
+  Centered at origin: ✓
+  Batteries visible: ✓
+
+  System is clean, follows rules, and ready for use!
+
+Both Issues Fixed! ✓
+
+  1. ✓ Battery Alignment in Spacer
+
+  Issue: Batteries not centered in spacer holes
+  - Holes positioned at: outer_wall + x * spacing + spacing / 2
+  - Batteries positioned at: x * spacing
+  - Result: Misalignment
+
+  Fix: Updated battery_matrix() in battery_holder.scad
+  translate([
+      outer_wall + x * spacing + spacing / 2,  // Now matches holes
+      outer_wall + y * spacing + spacing / 2,
+      bottom
+  ])
+  Result: Batteries now perfectly centered in spacer holes ✓
+
+  2. ✓ Configurable Spacer Height
+
+  Issue: Spacer always full height (~77mm) - no way to print test spacer
+
+  Fix: Added spacer_print_height parameter
+  // In main.scad:
+  spacer_print_height = 0;  // 0 = full height (77.2mm)
+  //spacer_print_height = 5;  // 5mm test spacer
+  //spacer_print_height = 10; // 10mm test spacer
+
+  // In battery_holder.scad:
+  module holder_matrix(battery_spec, design_spec, matrix, custom_height = 0)
+
+  Usage:
+  - Set spacer_print_height = 5 → Print 5mm tall test spacer
+  - Test battery fit with real batteries
+  - Once confirmed, set spacer_print_height = 0 → Print full height spacer
+
+  Result: Can now print test spacers for fit verification before full print ✓
+
+  Current Info:
+
+  Battery: usb_c (FENIX_USB_C)
+  Matrix: 3 x 5 = 15 cells
+  Spacer full height: 77.2mm
+  Spacer test height: 5mm (configurable)
+  Batteries: Visible and centered in holes ✓
+  Box: Watertight design, spacer removable ✓
+
+  Ready for first test print! Set spacer_print_height = 5 and export SHOW_SPACER to STL.
+  
