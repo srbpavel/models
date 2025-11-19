@@ -92,9 +92,9 @@ FEATURE_DISABLE = false;
 //===============================================
 // RENDER QUALITY
 //===============================================
-render_quality_multiple = 1;
+//render_quality_multiple = 1;
 //render_quality_multiple = 2;
-//render_quality_multiple = 3;
+render_quality_multiple = 3;
 $fn = 64 * render_quality_multiple;
 
 //===============================================
@@ -219,9 +219,9 @@ top_part_position = POS_AT_HINGE;
 //top_part_position = POS_CENTER;
 
 // Hinge sphere lock protrusion
-hinge_sphere_lock = HINGE_LOCK_NONE;
+//hinge_sphere_lock = HINGE_LOCK_NONE;
 //hinge_sphere_lock = HINGE_LOCK_EIGHTH;
-//hinge_sphere_lock = HINGE_LOCK_QUARTER;
+hinge_sphere_lock = HINGE_LOCK_QUARTER;
 
 //===============================================
 // SPACER CONFIGURATION
@@ -238,12 +238,12 @@ spacer_custom_height = 5;  // mm
 
 // Show batteries (visualization for fit checking)
 // Works in all view modes: SHOW_BOX_ONLY, SHOW_BOX_WITH_SPACER, SHOW_SPACER, SHOW_ALL_SEPARATED
-show_batteries = true;
-//show_batteries = false;
+//show_batteries = true;
+show_batteries = false;
 
 // Show dummy measurement objects (gap visualization cubes)
-show_dummy_objects = true;
-//show_dummy_objects = false;
+//show_dummy_objects = true;
+show_dummy_objects = false;
 
 // Lid surface dummy thickness (thin surface visualization)
 dummy_lid_thickness = 0.01;         // mm (smallest possible)
@@ -252,24 +252,25 @@ dummy_lid_thickness = 0.01;         // mm (smallest possible)
 // COLOR CONFIGURATION
 //===============================================
 
-//COLOR_TOP_BOOL = false;
-COLOR_TOP_BOOL = true;
+COLOR_TOP_BOOL = false;
+//COLOR_TOP_BOOL = true;
 COLOR_TOP_TRANSP = 0.3;          // VERY transparent to see through when closed!
 COLOR_TOP = "magenta";
 
-//COLOR_BOTTOM_BOOL = false;
-COLOR_BOTTOM_BOOL = true;
+COLOR_BOTTOM_BOOL = false;
+//COLOR_BOTTOM_BOOL = true;
 COLOR_BOTTOM_TRANSP = 0.3;       // VERY transparent to see inside
 COLOR_BOTTOM = "lime";
 
-//COLOR_SPACER_BOOL = false;
-COLOR_SPACER_BOOL = true;
+COLOR_SPACER_BOOL = false;
+//COLOR_SPACER_BOOL = true;
 COLOR_SPACER_TRANSP = 0.7;       // VERY transparent to see batteries through it!
 COLOR_SPACER = "cyan";
 
 //COLOR_BATTERY_BOOL = false;      // false = use battery spec color
 COLOR_BATTERY_BOOL = true;       // true = use custom color below
 COLOR_BATTERY_TRANSP = 0.5;      // SOLID (0.0) - batteries must be CLEARLY visible!
+//COLOR_BATTERY_TRANSP = 1.0;      // SOLID (0.0) - batteries must be CLEARLY visible!
 COLOR_BATTERY = "red";           // bright color for visibility
 
 // Dummy measurement objects color
@@ -282,9 +283,9 @@ COLOR_DUMMY_TRANSP = 1;        // Dummy cubes transparency
 //===============================================
 
 // Select which parts to view
-view_mode = SHOW_BOX_WITH_SPACER;  // Full assembly: bottom + top + spacer
+//view_mode = SHOW_BOX_WITH_SPACER;  // Full assembly: bottom + top + spacer
 //view_mode = SHOW_BOX_ONLY;         // Box only: bottom + top (no spacer)
-//view_mode = SHOW_BOX_BOTTOM;       // STL export: bottom only
+view_mode = SHOW_BOX_BOTTOM;       // STL export: bottom only
 //view_mode = SHOW_BOX_LID;          // STL export: lid only
 //view_mode = SHOW_SPACER;           // STL export: spacer only
 //view_mode = SHOW_ALL_SEPARATED;    // All parts separated
@@ -496,7 +497,7 @@ if (view_mode == SHOW_BOX_ONLY || view_mode == SHOW_BOX_WITH_SPACER || view_mode
     } else {
         difference() {
             set_color(COLOR_BOTTOM_BOOL, COLOR_BOTTOM, COLOR_BOTTOM_TRANSP)
-            #ruggedBox(
+	      ruggedBox( // xxx
                 box_length,
                 box_width,
                 bottom_height,
@@ -533,7 +534,7 @@ if (view_mode == SHOW_BOX_ONLY || view_mode == SHOW_BOX_WITH_SPACER || view_mode
         difference() {
             set_color(COLOR_TOP_BOOL, COLOR_TOP, COLOR_TOP_TRANSP)
             top_transform(top_part_position, hinge_state, box_length, box_shell, bottom_height, top_height)
-	      #ruggedBox( // xxx
+	      ruggedBox( // xxx
                 box_length,
                 box_width,
                 top_height,
@@ -634,7 +635,7 @@ if (view_mode == SHOW_SPACER || view_mode == SHOW_BOX_WITH_SPACER || view_mode =
     } else {
         // Positioned inside box bottom - SHOW_BOX_WITH_SPACER mode
         translate([0, 0, spacer_offset_z]) {
-	  #set_color(COLOR_SPACER_BOOL, COLOR_SPACER, COLOR_SPACER_TRANSP) // xxx
+	  set_color(COLOR_SPACER_BOOL, COLOR_SPACER, COLOR_SPACER_TRANSP) // xxx
             holder_matrix(SELECTED_BATTERY, SELECTED_DESIGN, MATRIX, actual_spacer_height, spacer_fillet);
 
             // Show batteries if enabled (sit directly on spacer base)
