@@ -92,9 +92,9 @@ FEATURE_DISABLE = false;
 //===============================================
 // RENDER QUALITY
 //===============================================
-//render_quality_multiple = 1;
+render_quality_multiple = 1;
 //render_quality_multiple = 2;
-render_quality_multiple = 3;
+//render_quality_multiple = 3;
 $fn = 64 * render_quality_multiple;
 
 //===============================================
@@ -229,8 +229,8 @@ hinge_sphere_lock = HINGE_LOCK_QUARTER;
 
 // Spacer height mode selection
 //spacer_height_mode = HEIGHT_FULL_BATTERY;
-spacer_height_mode = HEIGHT_ALIGN_BOTTOM;  // Flush with bottom part top edge
-//spacer_height_mode = HEIGHT_HALF;          // Quick test at 1/2 height
+//spacer_height_mode = HEIGHT_ALIGN_BOTTOM;  // Flush with bottom part top edge
+spacer_height_mode = HEIGHT_HALF;          // Quick test at 1/2 height
 //spacer_height_mode = HEIGHT_CUSTOM;        // Custom test height
 
 // Custom height (ONLY used when HEIGHT_CUSTOM selected, otherwise IGNORED)
@@ -238,12 +238,12 @@ spacer_custom_height = 5;  // mm
 
 // Show batteries (visualization for fit checking)
 // Works in all view modes: SHOW_BOX_ONLY, SHOW_BOX_WITH_SPACER, SHOW_SPACER, SHOW_ALL_SEPARATED
-//show_batteries = true;
-show_batteries = false;
+show_batteries = true;
+//show_batteries = false;
 
 // Show dummy measurement objects (gap visualization cubes)
-//show_dummy_objects = true;
-show_dummy_objects = false;
+show_dummy_objects = true;
+//show_dummy_objects = false;
 
 // Lid surface dummy thickness (thin surface visualization)
 dummy_lid_thickness = 0.01;         // mm (smallest possible)
@@ -283,9 +283,9 @@ COLOR_DUMMY_TRANSP = 1;        // Dummy cubes transparency
 //===============================================
 
 // Select which parts to view
-//view_mode = SHOW_BOX_WITH_SPACER;  // Full assembly: bottom + top + spacer
+view_mode = SHOW_BOX_WITH_SPACER;  // Full assembly: bottom + top + spacer
 //view_mode = SHOW_BOX_ONLY;         // Box only: bottom + top (no spacer)
-view_mode = SHOW_BOX_BOTTOM;       // STL export: bottom only
+//view_mode = SHOW_BOX_BOTTOM;       // STL export: bottom only
 //view_mode = SHOW_BOX_LID;          // STL export: lid only
 //view_mode = SHOW_SPACER;           // STL export: spacer only
 //view_mode = SHOW_ALL_SEPARATED;    // All parts separated
